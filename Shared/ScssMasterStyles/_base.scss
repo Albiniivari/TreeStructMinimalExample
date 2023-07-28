@@ -1,0 +1,30 @@
+﻿@import "global-styles.scss";
+.sizingWrap {
+    box-sizing: border-box;
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    height: 20px;
+    font-family: $font-stack;
+    transition: background .2s;
+}
+
+.baseControl {
+    padding-left: 2px;
+    border: 1px solid $border-gray;
+    composes: sizingWrap;
+    outline-color: $selected-color;
+    cursor: pointer;
+    font-size: $font-standard-size;
+    color: $font-standard-color;
+    vertical-align: top;
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+
+    textarea.baseControl:focus,
+    select.baseControl:focus,
+    input.baseControl:focus {
+        box-shadow: 0 0 0.25px 1px $selected-color-lighter;
+    }
+}

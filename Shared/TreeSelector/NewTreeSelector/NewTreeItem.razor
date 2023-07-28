@@ -1,0 +1,76 @@
+﻿
+<div style="padding-left: @(Item.Level*20)px">
+    <div class=@SetCssClass() style="@(((Item.ChildrenIds != null && Item.ChildrenIds.Count <= 0)) ? "margin-left:20px;" : "")">
+        @if (Item.ChildrenIds != null && Item.ChildrenIds.Count() > 0)
+        {
+            <div class="treeNodeIcon" @onclick=ClickOnNode>
+                @(Item.IsExpanded ? "-" : "+")
+            </div>
+        }
+       
+        <div class="@("treeNodeRowText")" @onclick=ClickOnItem
+             title="@Item.Name">
+            @Item.Name
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public TreeSelectItem Item { get; set; }
+    [Parameter]
+    public TreeSelectItem ParentItem { get; set; }
+    [Parameter]
+    public EventCallback<TreeSelectItem> OnItemSelectionChanged { get; set; }
+    [Parameter]
+    public EventCallback<TreeSelectItem> OnExpanded { get; set; }
+
+
+   
+    [Parameter]
+    public bool AllowMultiSelect { get; set; }
+    [Parameter]
+    public bool ExpandOnIconOnly { get; set; }
+
+
+    private async Task ToggleSelection()
+    {
+        await OnItemSelectionChanged.InvokeAsync(Item);
+    }
+
+    private string SetCssClass()
+    {
+        string cssClass = "treeNodeRow";
+        if (Item.HasSelectedChild)
+        {
+            cssClass = "treeNodeRow treeNodeRowTextHasSelectedDescendant";
+        }
+
+        if (Item.IsSelected)
+        {
+            cssClass = "treeNodeRow treeNodeRowActive";
+        }
+        return cssClass;
+    }
+
+
+    protected void ClickOnNode()
+    {
+        Item.IsExpanded = !Item.IsExpanded;
+        OnExpanded.InvokeAsync(Item);
+    }
+
+    private async Task ClickOnItem()
+    {
+        if (Item.ChildrenIds.Count() > 0 && !AllowMultiSelect && !ExpandOnIconOnly)
+        {
+            Item.IsExpanded = !Item.IsExpanded;
+            await OnExpanded.InvokeAsync(Item);
+        }
+        else
+        {
+            await ToggleSelection();
+        }
+    }
+}

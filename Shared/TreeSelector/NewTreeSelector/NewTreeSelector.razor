@@ -1,0 +1,20 @@
+﻿@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Test2TreeStruct.Shared.TreeSelector.TreeStructure
+
+@if (Items != null)
+{
+    <TreeStructure Items="_filteredFlattenedItems" RowSize="33" TItem="TreeSelectItem">
+        <ItemTemplate>
+            @*Here, context is the things that is sent from the TreeStructure, which is the eventcallback and the item*@
+            <NewTreeItem @key=context.Item1.Id
+                          Item=context.Item1
+                          OnExpanded="context.Item2"
+                          OnItemSelectionChanged="HandleItemSelectionChanged"
+                          ExpandOnIconOnly="ExpandOnIconOnly"
+                          AllowMultiSelect=AllowMultiSelect
+                          />
+        </ItemTemplate>
+    </TreeStructure>
+}
+
+

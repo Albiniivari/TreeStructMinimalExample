@@ -1,0 +1,25 @@
+﻿@page "/"
+
+@using Test2TreeStruct.Shared.TreeSelector.NewTreeSelector
+
+<PageTitle>Test</PageTitle>
+
+<NewTreeSelector Items="treeItems"></NewTreeSelector>
+
+@code {
+    private int currentCount = 0;
+    private List<TreeSelectItem> treeItems = new();
+    protected override void OnInitialized()
+    {
+        TreeSelectItem parent = new() { Name = "Test", Id = "1", ChildrenIds = new List<string> { }, IsExpanded = false };
+        treeItems.Add(parent);
+
+        for (int i = 2; i < 100; i++)
+        {
+            treeItems.Add(new() { Name = "TestChild" + i, Id = i.ToString(), ChildrenIds = new List<string> { }, ParentId = "1" });
+            parent.ChildrenIds.Add(i.ToString());
+        }
+
+    }
+
+}

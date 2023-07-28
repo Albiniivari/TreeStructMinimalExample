@@ -1,0 +1,18 @@
+
+.treeSelector {
+    flex: 1;
+    flex-basis: 0;
+    overflow: auto;
+}
+
+.listComponent {
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    max-height: 100%;
+}
+
+.childNodeContainer {
+    margin-right: auto;
+}

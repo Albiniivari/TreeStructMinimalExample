@@ -1,0 +1,206 @@
+﻿@using Microsoft.AspNetCore.Components.Web.Virtualization;
+@using Microsoft.AspNetCore.Components
+@typeparam TItem where TItem : TreeItemBase
+
+
+@if (Items != null)
+{
+    <div class="treeSelector">
+        <div class="listComponent">
+            <Virtualize @ref=_virtualizeRef Items=_visibleItems Context="item" TItem=TItem
+                        ItemSize=RowSize OverscanCount="OverscanCount">
+                <ItemContent>
+                    <div class="childNodeContainer" @key=item.Id>
+                        @*We want to send in an eventcallback to the renderfragment, 
+                        that should be ran when the user expands an item. Otherwise the user of TreeStructure 
+                        would have to handle when you open a parentItem, and then TreeStructure would have to
+                        rebuild the tree fully.*@
+                        @if (ItemTemplate != null)
+                        {
+                            @ItemTemplate((item, EventCallback.Factory.Create<TItem>(this, () => OnExpanded(item))))
+                        }
+                    </div>
+                </ItemContent>
+            </Virtualize>
+        </div>
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// Bestämmer hur varje rad i trädet ska se ut och vad för data som ska visas.
+    /// Kan även lägga in egen funktionalitet här
+    /// </summary>
+    [Parameter, EditorRequired]
+    public RenderFragment<(TItem, EventCallback<TItem>)> ItemTemplate { get; set; }
+
+    /// <summary>
+    /// Lista av TreeItems (eller en klass som inheritar från TreeItem)
+    /// Den måste vara flattened.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public List<TItem> Items { get; set; }
+
+    [Parameter]
+    public int OverscanCount { get; set; } = 20;
+
+
+    /// <summary>
+    /// Höjden en rad i trädet, i pixlar.
+    /// Är viktig för Virtualize ska fungera korrekt
+    /// </summary>
+    [Parameter, EditorRequired]
+    public int RowSize { get; set; }
+
+    private Dictionary<string, TItem> _itemsDict = default!;
+    private List<TItem> _visibleItems = default!;
+    private List<TItem> _cachedItems = default!;
+
+    private Virtualize<TItem> _virtualizeRef = default!;
+
+    protected override void OnInitialized()
+    {
+        _cachedItems = new();
+        _visibleItems = new();
+        _itemsDict = new();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Om Items:en man skickat in har ändrats så vi sätta om en del saker
+        if (Items != null && !_cachedItems.SequenceEqual(Items))
+        {
+
+            await UpdateItems(Items);
+            _cachedItems = new List<TItem>(Items);
+        }
+    }
+
+    private async Task UpdateItems(List<TItem> addedItems)
+    {
+        _itemsDict = Items.ToDictionary(x => x.Id, x => x);
+        _visibleItems.Clear();
+
+        foreach (var addedItem in addedItems)
+        {
+            AddVisibleItem(addedItem);
+        }
+
+        if (_virtualizeRef != null)
+        {
+            await _virtualizeRef.RefreshDataAsync();
+        }
+    }
+
+    private void UpdateVisibleItems(TItem item)
+    {
+        // Om man öppnat itemet, lägg till dess children
+        if (item.IsExpanded)
+        {
+            AddVisibleItem(item);
+        }
+        else
+        {
+            // Om man stängt den, ta bort children från visibleItems
+            var startIndex = _visibleItems.IndexOf(item) + 1;
+            if (startIndex >= 0)
+            {
+                var endIndex = startIndex + 1;
+                while (endIndex < _visibleItems.Count && IsAncestor(_visibleItems[endIndex], item))
+                {
+                    endIndex++;
+                }
+
+                _visibleItems.RemoveRange(startIndex, endIndex - startIndex);
+            }
+        }
+    }
+
+    private bool IsAncestor(TItem item, TItem potentialAncestor)
+    {
+        var parentId = item.ParentId;
+        while (parentId != null)
+        {
+            // Kolla om parent är den potentiella förfadern
+            if (parentId == potentialAncestor.Id)
+            {
+                return true;
+            }
+            // annars, fortsätt upp i trädet tills det inte finns några mer förfäder att jämföra
+            if (_itemsDict.TryGetValue(parentId, out var parent))
+            {
+                parentId = parent.ParentId;
+            }
+            else
+            {
+                // Parent fanns ej i dict.
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    // Method to be ran when an item has been expanded
+    private async Task OnExpanded(TItem item)
+    {
+
+        UpdateVisibleItems(item);
+        await _virtualizeRef.RefreshDataAsync();
+        StateHasChanged();
+    }
+
+    private int CountParents(TItem item)
+    {
+        int count = 0;
+        var parentId = item.ParentId;
+        while (parentId != null)
+        {
+            if (_itemsDict.TryGetValue(parentId, out var parent))
+            {
+                count++;
+                parentId = parent.ParentId;
+            }
+            else
+            {
+                break;
+            }
+        }
+        return count;
+    }
+
+    private void AddVisibleItem(TItem item)
+    {
+        TItem? parentItem = null;
+        // Only add an item to VisibleItems if it's parent is expanded or if it is a root-node (always visible)
+        if (item.ParentId == null || (_itemsDict.TryGetValue(item.ParentId, out parentItem) && parentItem.IsExpanded))
+        {
+            var insertIndex = _visibleItems.Count();
+
+            if (item.ParentId != null && parentItem != null)
+            {
+                insertIndex = _visibleItems.IndexOf(parentItem);
+                if (insertIndex >= 0) insertIndex += 1;
+            }
+
+            item.Level = CountParents(item);
+            if (!_visibleItems.Contains(item))
+            {
+                _visibleItems.Insert(insertIndex, item);
+            }
+
+            // If item is expanded, add its children to visibleItems
+            if (item.IsExpanded)
+            {
+                var startIndex = _visibleItems.IndexOf(item) + 1;
+                foreach (var childId in item.ChildrenIds)
+                {
+                    var child = _itemsDict[childId];
+                    AddVisibleItem(child);
+                    startIndex++;
+                }
+            }
+        }
+    }
+
+}
