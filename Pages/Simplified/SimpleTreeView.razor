@@ -1,0 +1,28 @@
+﻿@page "/treeview"
+@typeparam TITem where TITem : SimpleTreeItem
+
+<ul>
+    @foreach (var item in Items)
+    {
+        <li @onclick="@(()=>ExpandItem(item))">
+            @ItemTemplate(item)
+        </li>
+    }
+</ul>
+
+@code {
+
+    [Parameter, EditorRequired]
+    public RenderFragment<TITem> ItemTemplate { get; set; }
+
+    [Parameter, EditorRequired]
+    public List<TITem> Items { get; set; }
+
+    private void ExpandItem(TITem simpleTreeItem)
+    {
+        simpleTreeItem.IsExpanded = !simpleTreeItem.IsExpanded;
+        // or, if you want more logic to occur in `SimpleTreeItem`, could invoke a method on it
+        // e.g. simpleTreeItem.ToggleExpanded()
+    }
+
+}
