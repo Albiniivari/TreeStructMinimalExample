@@ -1,28 +1,60 @@
 ﻿@page "/treeview"
-@typeparam TITem where TITem : SimpleTreeItem
+@using System.Collections
+@typeparam TItem where TItem : SimpleTreeItem
 
 <ul>
-    @foreach (var item in Items)
-    {
-        <li @onclick="@(()=>ExpandItem(item))">
-            @ItemTemplate(item)
-        </li>
+    @{
+        foreach (TItem? item in FlatTree)
+        {
+            <li @onclick="@(() => ExpandItem(item))">
+                @ItemTemplate(item)
+            </li>
+        }
     }
 </ul>
 
+
 @code {
+    private List<TItem> FlatTree;
 
     [Parameter, EditorRequired]
-    public RenderFragment<TITem> ItemTemplate { get; set; }
+    public RenderFragment<TItem> ItemTemplate { get; set; }
 
     [Parameter, EditorRequired]
-    public List<TITem> Items { get; set; }
+    public List<TItem> Items { get; set; }
 
-    private void ExpandItem(TITem simpleTreeItem)
+    protected override Task OnInitializedAsync()
+    {
+        FlatTree = FlattenTree(Items);
+        return base.OnInitializedAsync();
+    }
+
+    private void ExpandItem(TItem? simpleTreeItem)
     {
         simpleTreeItem.IsExpanded = !simpleTreeItem.IsExpanded;
-        // or, if you want more logic to occur in `SimpleTreeItem`, could invoke a method on it
-        // e.g. simpleTreeItem.ToggleExpanded()
+        FlatTree = FlattenTree(Items);
+    }
+
+    public static List<TItem> FlattenTree(List<TItem> nodes)
+    {
+        var nodesList = new List<TItem?>();
+        var stack = new Stack<TItem>(nodes);
+
+        while (stack.Any())
+        {
+            var currentNode = stack.Pop();
+            nodesList.Add(currentNode);
+
+            if (currentNode.IsExpanded)
+            {
+                for (var i = currentNode.Children.Count - 1; i >= 0; i--)
+                {
+                    stack.Push(currentNode.Children[i] as TItem);
+                }
+            }
+        }
+
+        return nodesList;
     }
 
 }

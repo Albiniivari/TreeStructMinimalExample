@@ -6,4 +6,5 @@ public class SimpleTreeItem
     public string Name { get; set; }
     public int Level { get; set; }
     public bool IsExpanded { get; set; }
+    public List<SimpleTreeItem> Children { get; set; } = new();
 }

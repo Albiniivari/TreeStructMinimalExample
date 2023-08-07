@@ -1,21 +1,27 @@
 ﻿@page "/Test"
 
-<SimpleTreeView Items="items" TITem="SimpleTreeItem">
+<SimpleTreeView Items="items" TItem="SimpleTreeItem">
     <ItemTemplate>
         @context.Name (@context.Id)
-        @if (context.IsExpanded)
-        {
-            <p>We're expanded!</p>
-        }
     </ItemTemplate>
 </SimpleTreeView>
 
 @code {
 
-    private List<SimpleTreeItem> items = new()
+    private List<SimpleTreeItem> items = new List<SimpleTreeItem>
     {
-        new SimpleTreeItem { Id = "1", Name = "Test Item 1" },
-        new SimpleTreeItem { Id = "2", Name = "Test Item 2" }
+        new() { Id = "1", Name = "Test Item 1", Children = new List<SimpleTreeItem>
+        {
+            new(){Name = "Another 1"},
+            new(){Name = "Another another 1 :)"}
+        }},
+        new()
+        {
+            Id = "2", Name = "Test Item 2", Children = new List<SimpleTreeItem>()
+            {
+                new() { Id = "3", Name = "Nested again" }
+            }
+        },
     };
 
 }
