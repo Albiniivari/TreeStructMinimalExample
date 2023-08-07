@@ -38,7 +38,7 @@
     public static List<TItem> FlattenTree(List<TItem> nodes)
     {
         var nodesList = new List<TItem?>();
-        var stack = new Stack<TItem>(nodes);
+        var stack = new Stack<TItem>(nodes.OrderByDescending(x=>x.Id));
 
         while (stack.Any())
         {
