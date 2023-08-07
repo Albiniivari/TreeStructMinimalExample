@@ -1,0 +1,60 @@
+﻿@page "/treeview"
+@using System.Collections
+@typeparam TItem where TItem : SimpleTreeItem
+
+<ul>
+    @{
+        foreach (TItem? item in FlatTree)
+        {
+            <li @onclick="@(() => ExpandItem(item))">
+                @ItemTemplate(item)
+            </li>
+        }
+    }
+</ul>
+
+
+@code {
+    private List<TItem> FlatTree;
+
+    [Parameter, EditorRequired]
+    public RenderFragment<TItem> ItemTemplate { get; set; }
+
+    [Parameter, EditorRequired]
+    public List<TItem> Items { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        FlatTree = FlattenTree(Items);
+        return base.OnInitializedAsync();
+    }
+
+    private void ExpandItem(TItem? simpleTreeItem)
+    {
+        simpleTreeItem.IsExpanded = !simpleTreeItem.IsExpanded;
+        FlatTree = FlattenTree(Items);
+    }
+
+    public static List<TItem> FlattenTree(List<TItem> nodes)
+    {
+        var nodesList = new List<TItem?>();
+        var stack = new Stack<TItem>(nodes.OrderByDescending(x=>x.Id));
+
+        while (stack.Any())
+        {
+            var currentNode = stack.Pop();
+            nodesList.Add(currentNode);
+
+            if (currentNode.IsExpanded)
+            {
+                for (var i = currentNode.Children.Count - 1; i >= 0; i--)
+                {
+                    stack.Push(currentNode.Children[i] as TItem);
+                }
+            }
+        }
+
+        return nodesList;
+    }
+
+}

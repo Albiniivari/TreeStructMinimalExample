@@ -1,0 +1,27 @@
+﻿@page "/Test"
+
+<SimpleTreeView Items="items" TItem="SimpleTreeItem">
+    <ItemTemplate>
+        @context.Name (@context.Id)
+    </ItemTemplate>
+</SimpleTreeView>
+
+@code {
+
+    private List<SimpleTreeItem> items = new List<SimpleTreeItem>
+    {
+        new() { Id = "1", Name = "Test Item 1", Children = new List<SimpleTreeItem>
+        {
+            new(){Name = "Another 1"},
+            new(){Name = "Another another 1 :)"}
+        }},
+        new()
+        {
+            Id = "2", Name = "Test Item 2", Children = new List<SimpleTreeItem>()
+            {
+                new() { Id = "3", Name = "Nested again" }
+            }
+        },
+    };
+
+}
